@@ -5,4 +5,4 @@ endif
 let g:loaded_hanger = 1
 
 command! -nargs=0 Greet lua require("hanger").greet()
-command! -nargs=0 CPath lua require("hanger").copyAbsPath()
+command! -nargs=0 CPath lua require("hanger").copy_buf_abs_path()
