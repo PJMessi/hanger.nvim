@@ -1,6 +1,6 @@
 local greet = require("hanger.greet")
 local bufAction = require("hanger.path_action")
-local testActions = require("hanger.test_actions")
+local testActions = require("hanger.test_actions.init")
 local makefileActions = require("hanger.make_file_actions")
 
 local M = {}
