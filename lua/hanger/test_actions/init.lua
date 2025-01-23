@@ -4,6 +4,15 @@ local rustlangpkg = require("hanger.test_actions.rust_test_module_extractor")
 local terminal = require("hanger.test_actions.terminal")
 local utils = require("hanger.test_actions.utils")
 
+M.config = {
+    output = "term",      -- options: 'term' / 'zellij'
+    floating_pane = false, -- only valid for 'zellij' 'output'
+}
+
+function M.setup(user_config)
+    M.config = vim.tbl_deep_extend("force", M.config, user_config)
+end
+
 local cmd_cache = nil
 
 function M.run_single_test()
@@ -12,12 +21,10 @@ function M.run_single_test()
         return
     end
 
-    print(cmd)
-
     -- Cache the command
     cmd_cache = cmd
 
-    terminal.run_in_terminal(cmd)
+    terminal.run_in_terminal(cmd, M.config)
 end
 
 function M.run_tests_in_file()
@@ -26,12 +33,10 @@ function M.run_tests_in_file()
         return
     end
 
-    print(cmd)
-
     -- Cache the command
     cmd_cache = cmd
 
-    terminal.run_in_terminal(cmd)
+    terminal.run_in_terminal(cmd, M.config)
 end
 
 function M.rerun_test()
@@ -40,9 +45,7 @@ function M.rerun_test()
         return
     end
 
-    print(cmd_cache)
-
-    terminal.run_in_terminal(cmd_cache)
+    terminal.run_in_terminal(cmd_cache, M.config)
 end
 
 function M.get_test_cmd(is_single)

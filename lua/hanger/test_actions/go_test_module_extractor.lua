@@ -53,6 +53,13 @@ function Go.get_module_names()
             test_name = suite_match
             is_suite_test = true
             break
+        -- else
+        --     local suite_match_2 = string.match(line, 't%.Run%("%s*([%w%s\'_%-]+)%s*"%s*,')
+        --     if suite_match_2 then
+        --         test_name = suite_match_2
+        --         is_suite_test = true
+        --         break
+        --     end
         end
     end
 

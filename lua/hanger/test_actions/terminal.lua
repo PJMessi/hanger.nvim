@@ -1,19 +1,27 @@
 local M = {}
 
-local use_zellij = true
-
-function M.run_in_terminal(cmd)
+function M.run_in_terminal(cmd, config)
     local starting_win = vim.api.nvim_get_current_win()
 
-    if use_zellij then
+    print(cmd)
+
+    if config.output == "zellij" then
         -- Execute the Zellij command
-        local zellij_cmd = "zellij action new-pane -f -- " .. cmd
+        local zellij_cmd = "zellij action new-pane "
+
+        if config.floating_pane then
+            zellij_cmd = zellij_cmd .. "-f -- " .. cmd
+        else
+            zellij_cmd = zellij_cmd .. "-- " .. cmd
+        end
+
         vim.fn.system(zellij_cmd)
 
-        -- -- Return to the original window after execution
+        -- Return to the original window after execution
         -- if vim.api.nvim_win_is_valid(starting_win) then
         --     vim.api.nvim_set_current_win(starting_win)
         -- end
+
         return
     end
 

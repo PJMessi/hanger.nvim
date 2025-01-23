@@ -99,6 +99,10 @@ function Rust.get_test_pattern()
     end
 
     local file_name_without_ext = vim.fn.expand("%:t:r")
+    if file_name_without_ext == "main" or file_name_without_ext == "lib" then
+        return test_module
+    end
+
     local test_pattern = string.format("%s::%s", file_name_without_ext, test_module)
 
     local current_dir = vim.fn.expand("%:p:h")
