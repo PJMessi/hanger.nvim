@@ -43,5 +43,5 @@ Support for additional programming languages will be added in future releases. S
 
 
 ## Demo Videos
-[RunSingleTest Demo](./single_test_demo.mov)
-[RunFileTests Demo](./full_test_demo.mov)
+[RunSingleTest Demo](./single_test_demo.mp4)
+[RunFileTests Demo](./full_test_demo.mp4)
