@@ -27,8 +27,8 @@ Use your preferred plugin manager to install the plugin.
     cmd = { "RunSingleTest", "RerunSingleTest", "RunFileTests" },
     config = function()
       require("hanger").setup({
-        output = "zellij",
-        floating_pane = true,
+        output = "term",      -- options: 'term' / 'zellij'
+        floating_pane = false, -- only valid for 'zellij' 'output'
       })
 
       vim.api.nvim_set_keymap('n', '<leader>rt', ':RunSingleTest<CR>', { noremap = true, silent = true })
