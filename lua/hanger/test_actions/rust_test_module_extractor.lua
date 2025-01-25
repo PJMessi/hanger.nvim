@@ -103,7 +103,10 @@ function Rust.get_test_pattern()
         return test_module
     end
 
-    local test_pattern = string.format("%s::%s", file_name_without_ext, test_module)
+    local test_pattern = test_module
+    if file_name_without_ext ~= "mod" then
+        test_pattern = string.format("%s::%s", file_name_without_ext, test_pattern)
+    end
 
     local current_dir = vim.fn.expand("%:p:h")
     if Rust.has_mod_rs(current_dir) == false then
