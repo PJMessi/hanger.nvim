@@ -103,18 +103,23 @@ function Rust.get_test_pattern()
         return test_module
     end
 
+    -- Initialize test pattern with test module.
     local test_pattern = test_module
+
+    -- If the current file is not a mod file, attach the filename with the test module.
     if file_name_without_ext ~= "mod" then
         test_pattern = string.format("%s::%s", file_name_without_ext, test_pattern)
     end
 
+    -- Recursively find parent modules by traversing up the directory structure.
     local current_dir = vim.fn.expand("%:p:h")
-    if Rust.has_mod_rs(current_dir) == false then
-        return test_pattern
+    while Rust.has_mod_rs(current_dir) do
+        local parent_folder_name = vim.fn.fnamemodify(current_dir, ":t")
+        test_pattern = string.format("%s::%s", parent_folder_name, test_pattern)
+        current_dir = vim.fn.fnamemodify(current_dir, ":h") -- Move up one directory
     end
 
-    local parent_folder_name = vim.fn.fnamemodify(current_dir, ":t")
-    return string.format("%s::%s", parent_folder_name, test_pattern)
+    return test_pattern
 end
 
 function Rust.has_mod_rs(directory)
