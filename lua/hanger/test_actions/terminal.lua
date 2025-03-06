@@ -1,38 +1,28 @@
 local M = {}
+local cmd_cache = nil
 
-function M.run_in_terminal(cmd, config)
-    local starting_win = vim.api.nvim_get_current_win()
+local function execute_in_zellij(cmd, config)
+    -- Execute the Zellij command
+    local zellij_cmd = "zellij action new-pane "
 
-    print(cmd)
-
-    if config.output == "zellij" then
-        -- Execute the Zellij command
-        local zellij_cmd = "zellij action new-pane "
-
-        if config.floating_pane then
-            zellij_cmd = zellij_cmd .. "-f -- " .. cmd
-        else
-            zellij_cmd = zellij_cmd .. "-- " .. cmd
-        end
-
-        vim.fn.system(zellij_cmd)
-
-        -- Return to the original window after execution
-        -- if vim.api.nvim_win_is_valid(starting_win) then
-        --     vim.api.nvim_set_current_win(starting_win)
-        -- end
-
-        return
+    if config.floating_pane then
+        zellij_cmd = zellij_cmd .. "-f -- " .. cmd
+    else
+        zellij_cmd = zellij_cmd .. "-- " .. cmd
     end
 
+    vim.fn.system(zellij_cmd)
+end
+
+local function execute_in_nvim_term(cmd, _)
     vim.cmd("split")
-    -- vim.cmd("term " .. cmd)
     vim.cmd("term echo '" .. cmd .. "\\n' && " .. cmd)
     vim.cmd("resize | wincmd J")
 
     -- Get the terminal window and buffer
     local term_win = vim.api.nvim_get_current_win()
 
+    local starting_win = vim.api.nvim_get_current_win()
     vim.api.nvim_create_autocmd("WinClosed", {
         pattern = tostring(term_win),
         callback = function()
@@ -43,6 +33,26 @@ function M.run_in_terminal(cmd, config)
         end,
         once = true
     })
+end
+
+function M.execute(cmd, config)
+    cmd_cache = cmd
+
+    if config.output == "zellij" then
+        execute_in_zellij(cmd, config)
+        return
+    end
+
+    execute_in_nvim_term(cmd, config)
+end
+
+function M.execute_cache(config)
+    if cmd_cache == nil then
+        vim.notify("no tests were run previously", vim.log.levels.INFO)
+        return
+    end
+
+    M.execute(cmd_cache, config)
 end
 
 return M
