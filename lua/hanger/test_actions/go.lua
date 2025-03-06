@@ -1,6 +1,7 @@
 local Go = {}
 local term = require("hanger.test_actions.terminal")
 
+
 local function get_test_func_name()
     -- Get buffer and parser
     local buf = vim.api.nvim_get_current_buf()
@@ -29,24 +30,66 @@ local function get_test_func_name()
 
     -- If it's a method, find the suite runner
     if node:type() == "method_declaration" then
-        -- Get the code as text for simpler searching
-        local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-        local code = table.concat(lines, "\n")
-
-        -- Get receiver type
+        -- Simpler approach to get receiver type
         local receiver = node:field("receiver")[1]
         if receiver then
-            local receiver_text = vim.treesitter.get_node_text(receiver, buf)
-            local suite_type = receiver_text:match("*([%w_]+)")
+            for i = 0, receiver:named_child_count() - 1 do
+                local param = receiver:named_child(i)
+                if param and param:type() == "parameter_declaration" then
+                    for j = 0, param:named_child_count() - 1 do
+                        local child = param:named_child(j)
+                        if child and child:type() == "pointer_type" then
+                            local type_node = child:named_child(0)
+                            if type_node then
+                                local receiver_type = vim.treesitter.get_node_text(type_node, buf)
 
-            if suite_type and suite_type:match("Suite$") then
-                -- Find the suite runner using simple pattern matching
-                local suite_runner_pattern = "func%s+([Test][%w_]+)%s*%(.*%)[^{]*{[^}]*suite%.Run%s*%([^,]+,%s*new%s*%(" ..
-                    suite_type .. "%s*%)%)"
-                local suite_runner = code:match(suite_runner_pattern)
+                                if receiver_type:match("Suite$") then
+                                    -- Find the suite runner using a simpler query
+                                    local runner_query = vim.treesitter.query.parse("go", [[
+                                        (function_declaration
+                                          name: (identifier) @func_name
+                                          body: (block
+                                            (expression_statement
+                                              (call_expression
+                                                function: (selector_expression
+                                                  field: (field_identifier) @method (#eq? @method "Run")
+                                                )
+                                                arguments: (argument_list
+                                                  (_)
+                                                  (call_expression
+                                                    function: (identifier) @new (#eq? @new "new")
+                                                    arguments: (argument_list
+                                                      (type_identifier) @suite_type
+                                                    )
+                                                  )
+                                                )
+                                              )
+                                            )
+                                          )
+                                        )
+                                    ]])
 
-                if suite_runner then
-                    return func_name, suite_runner
+                                    -- Iterate through all function declarations
+                                    for _, func_node in ipairs(tree:root():named_children()) do
+                                        if func_node:type() == "function_declaration" then
+                                            for id, matched_node in runner_query:iter_captures(func_node, buf) do
+                                                local capture_name = runner_query.captures[id]
+                                                if capture_name == "suite_type" then
+                                                    local suite_type = vim.treesitter.get_node_text(matched_node, buf)
+                                                    if suite_type == receiver_type then
+                                                        -- Get the function name
+                                                        local fn_node = func_node:field("name")[1]
+                                                        local fn_name = vim.treesitter.get_node_text(fn_node, buf)
+                                                        return func_name, fn_name
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
                 end
             end
         end
@@ -55,6 +98,7 @@ local function get_test_func_name()
     -- Regular test or suite runner
     return func_name, nil
 end
+
 
 local function get_package_rel_path()
     local file_path = vim.fn.expand("%")
