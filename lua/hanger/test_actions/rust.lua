@@ -4,17 +4,19 @@ local term = require("hanger.test_actions.terminal")
 
 local function build_cmd(runnable)
     -- Build test command from runnable.
-    local cmd = "cargo "
+    local cmd = "cargo"
 
     -- Setup cargo arguments.
     for _, val in ipairs(runnable.args.cargoArgs) do
-        cmd = cmd .. val .. " "
+        cmd = cmd .. " " .. val
     end
 
     -- Setup rust arguments.
-    cmd = cmd .. "-- "
-    for _, val in ipairs(runnable.args.executableArgs) do
-        cmd = cmd .. val .. " "
+    if #runnable.args.executableArgs > 0 then
+        cmd = cmd .. " --"
+        for _, val in ipairs(runnable.args.executableArgs) do
+            cmd = cmd .. " " .. val
+        end
     end
 
     return cmd
