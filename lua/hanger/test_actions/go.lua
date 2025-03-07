@@ -1,5 +1,6 @@
 local Go = {}
 local term = require("hanger.test_actions.terminal")
+local telescope = require("hanger.test_actions.telescope")
 
 local function find_suite_name(buf, node)
     -- Get receiver type
@@ -42,6 +43,10 @@ local function find_suite_name(buf, node)
     return nil
 end
 
+local function is_test_func(func_name)
+    return func_name:match("^Test")
+end
+
 local function get_test_func_name()
     -- Get buffer and parser
     local buf = vim.api.nvim_get_current_buf()
@@ -66,7 +71,7 @@ local function get_test_func_name()
     local func_name = vim.treesitter.get_node_text(name_node, buf)
 
     -- Check if it's a test function
-    if not func_name:match("^Test") then return nil, nil end
+    if not is_test_func(func_name) then return nil, nil end
 
     -- If it's a method, find the suite runner
     if node:type() == "method_declaration" then
@@ -122,6 +127,46 @@ function Go.execute_package(config)
 end
 
 function Go.show_runnables(config)
+    -- Get buffer and parser
+    local buf = vim.api.nvim_get_current_buf()
+    local parser = vim.treesitter.get_parser(buf, "go")
+    if not parser then return {} end
+
+    -- Get the root node
+    local root = parser:parse()[1]:root()
+
+    -- Query for all function and method declarations
+    local query_str = [[
+      (function_declaration) @func
+      (method_declaration) @method
+    ]]
+
+    local query = vim.treesitter.query.parse("go", query_str)
+
+    local cmds = {}
+    local rel_path = get_package_rel_path()
+
+    for id, node in query:iter_captures(root, buf) do
+        local capture_name = query.captures[id]
+        local name_node = node:field("name")[1]
+
+        if name_node then
+            local func_name = vim.treesitter.get_node_text(name_node, buf)
+
+            -- Check if it's a test function (starts with Test)
+            if is_test_func(func_name) then
+                if capture_name == "func" then
+                    table.insert(cmds, build_cmd(rel_path, func_name, false))
+                elseif capture_name == "method" then
+                    -- Method on a suite
+                    local suite_wrapper = find_suite_name(buf, node)
+                    table.insert(cmds, build_cmd(rel_path, func_name, true, suite_wrapper))
+                end
+            end
+        end
+    end
+
+    telescope.show_popups(cmds, config)
 end
 
 return Go

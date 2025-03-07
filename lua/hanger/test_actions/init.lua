@@ -42,6 +42,8 @@ function M.show_runnables()
     local lang_name = vim.bo.filetype
     if lang_name == "rust" then
         rust.show_runnables(M.config)
+    elseif lang_name == "go" then
+        go.show_runnables(M.config)
     else
         vim.notify("language not supported", vim.log.levels.ERROR)
     end
