@@ -2,24 +2,39 @@ local Go = {}
 local term = require("hanger.test_actions.terminal")
 
 local function find_suite_name(buf, node)
-    -- Get the code as text for simpler searching
-    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-    local code = table.concat(lines, "\n")
-
     -- Get receiver type
     local receiver = node:field("receiver")[1]
-    if receiver then
-        local receiver_text = vim.treesitter.get_node_text(receiver, buf)
-        local suite_type = receiver_text:match("*([%w_]+)")
+    if not receiver then return nil end
 
-        if suite_type and suite_type:match("Suite$") then
-            -- Find the suite runner using simple pattern matching
-            local suite_runner_pattern = "func%s+([Test][%w_]+)%s*%(.*%)[^{]*{[^}]*suite%.Run%s*%([^,]+,%s*new%s*%(" ..
-                suite_type .. "%s*%)%)"
-            local suite_runner = code:match(suite_runner_pattern)
+    local receiver_text = vim.treesitter.get_node_text(receiver, buf)
+    local suite_type = receiver_text:match("*([%w_]+)")
 
-            if suite_runner then
-                return suite_runner
+    if not suite_type or not suite_type:match("Suite$") then return nil end
+
+    -- Get the root node and parse all function declarations
+    local root = vim.treesitter.get_parser(buf):parse()[1]:root()
+
+    -- Query for all function declarations in the file
+    local query_str = [[
+      (function_declaration) @func_decl
+    ]]
+
+    local query = vim.treesitter.query.parse("go", query_str)
+
+    for _, func_node in query:iter_captures(root, buf) do
+        -- Look for a function that includes suite.Run with our suite type
+        local func_text = vim.treesitter.get_node_text(func_node, buf)
+
+        -- Check for suite runner/wrapper func name.
+        -- The func could have 'suite.Run(t, new(SuiteName))' or 'suite.Run(t, &SuiteName{})', or
+        -- a func call to get SuiteName, or many other ways to get SuiteName struct ptr. So it is
+        -- not really feasible to check for every way. So limit the check to have suite.Run with the
+        -- suite name only.
+        if func_text:match("suite%.Run") and func_text:match(suite_type) then
+            -- Extract the function name
+            local name_node = func_node:field("name")[1]
+            if name_node then
+                return vim.treesitter.get_node_text(name_node, buf)
             end
         end
     end
@@ -56,11 +71,11 @@ local function get_test_func_name()
     -- If it's a method, find the suite runner
     if node:type() == "method_declaration" then
         local suite_wrapper = find_suite_name(buf, node)
-        return func_name, suite_wrapper
+        return true, func_name, suite_wrapper
     end
 
     -- Regular test or suite runner
-    return func_name, nil
+    return false, func_name, nil
 end
 
 local function get_package_rel_path()
@@ -68,33 +83,41 @@ local function get_package_rel_path()
     return vim.fn.fnamemodify(file_path, ":h")
 end
 
-local function build_cmd(rel_path, test_func_name, suite_name)
+local function build_cmd(rel_path, test_func_name, is_suite_test, suite_name)
+    -- It is nil for package test commands.
     if test_func_name == nil then
         return string.format("go test ./%s -count=1 -v", rel_path)
     end
 
-    if suite_name == nil then
+    -- It is nil for default/normal test cases.
+    if is_suite_test == nil or is_suite_test == false then
         return string.format("go test ./%s -run ^%s$ -count=1 -v", rel_path, test_func_name)
+    end
+
+    -- It is nil if we were unable to find out the suite wrapper name. Use testify.m flag to execute
+    -- it uniquely.
+    if suite_name == nil then
+        return string.format("go test ./%s -testify.m ^%s$ -count=1 -v", rel_path, test_func_name)
     end
 
     return string.format("go test ./%s -run ^%s$/%s$ -count=1 -v", rel_path, suite_name, test_func_name)
 end
 
 function Go.execute_single(config)
-    local test_func_name, suite_name = get_test_func_name()
+    local is_suite_test, test_func_name, suite_name = get_test_func_name()
     if test_func_name == nil then
         vim.notify("could not extract test function name", vim.log.levels.WARN)
         return
     end
 
     local rel_path = get_package_rel_path()
-    local cmd = build_cmd(rel_path, test_func_name, suite_name)
+    local cmd = build_cmd(rel_path, test_func_name, is_suite_test, suite_name)
     term.execute(cmd, config)
 end
 
 function Go.execute_package(config)
     local rel_path = get_package_rel_path()
-    local cmd = build_cmd(rel_path, nil)
+    local cmd = build_cmd(rel_path)
     term.execute(cmd, config)
 end
 
