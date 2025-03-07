@@ -1,6 +1,32 @@
 local Go = {}
 local term = require("hanger.test_actions.terminal")
 
+local function find_suite_name(buf, node)
+    -- Get the code as text for simpler searching
+    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local code = table.concat(lines, "\n")
+
+    -- Get receiver type
+    local receiver = node:field("receiver")[1]
+    if receiver then
+        local receiver_text = vim.treesitter.get_node_text(receiver, buf)
+        local suite_type = receiver_text:match("*([%w_]+)")
+
+        if suite_type and suite_type:match("Suite$") then
+            -- Find the suite runner using simple pattern matching
+            local suite_runner_pattern = "func%s+([Test][%w_]+)%s*%(.*%)[^{]*{[^}]*suite%.Run%s*%([^,]+,%s*new%s*%(" ..
+                suite_type .. "%s*%)%)"
+            local suite_runner = code:match(suite_runner_pattern)
+
+            if suite_runner then
+                return suite_runner
+            end
+        end
+    end
+
+    return nil
+end
+
 local function get_test_func_name()
     -- Get buffer and parser
     local buf = vim.api.nvim_get_current_buf()
@@ -29,27 +55,8 @@ local function get_test_func_name()
 
     -- If it's a method, find the suite runner
     if node:type() == "method_declaration" then
-        -- Get the code as text for simpler searching
-        local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-        local code = table.concat(lines, "\n")
-
-        -- Get receiver type
-        local receiver = node:field("receiver")[1]
-        if receiver then
-            local receiver_text = vim.treesitter.get_node_text(receiver, buf)
-            local suite_type = receiver_text:match("*([%w_]+)")
-
-            if suite_type and suite_type:match("Suite$") then
-                -- Find the suite runner using simple pattern matching
-                local suite_runner_pattern = "func%s+([Test][%w_]+)%s*%(.*%)[^{]*{[^}]*suite%.Run%s*%([^,]+,%s*new%s*%(" ..
-                    suite_type .. "%s*%)%)"
-                local suite_runner = code:match(suite_runner_pattern)
-
-                if suite_runner then
-                    return func_name, suite_runner
-                end
-            end
-        end
+        local suite_wrapper = find_suite_name(buf, node)
+        return func_name, suite_wrapper
     end
 
     -- Regular test or suite runner
@@ -89,6 +96,9 @@ function Go.execute_package(config)
     local rel_path = get_package_rel_path()
     local cmd = build_cmd(rel_path, nil)
     term.execute(cmd, config)
+end
+
+function Go.show_runnables(config)
 end
 
 return Go
