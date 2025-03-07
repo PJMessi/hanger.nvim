@@ -5,6 +5,7 @@ local M = {}
 M.run_single_test = testActions.run_single_test
 M.run_tests_in_file = testActions.run_tests_in_file
 M.rerun_test = testActions.rerun_test
+M.show_runnables = testActions.show_runnables
 M.setup = testActions.setup
 
 return M

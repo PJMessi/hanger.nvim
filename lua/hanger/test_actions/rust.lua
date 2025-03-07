@@ -1,6 +1,7 @@
 local Rust = {}
 local utils = require("hanger.test_actions.utils")
 local term = require("hanger.test_actions.terminal")
+local telescope = require("hanger.test_actions.telescope")
 
 local function build_cmd(runnable)
     -- Build test command from runnable.
@@ -86,6 +87,27 @@ function Rust.execute_package(config)
                 term.execute(cmd, config)
             end
         end
+    end)
+end
+
+function Rust.show_runnables(config)
+    -- Request rust-analyzer for runnables.
+    local params = vim.lsp.util.make_position_params()
+    vim.lsp.buf_request(0, "experimental/runnables", params, function(err, result, _, _)
+        if validate_runnables_result(err, result) == false then
+            return
+        end
+
+        -- Select the runnable that includes the test function name.
+        local cmds = {}
+        for _, runnable in ipairs(result) do
+            -- Build command from runnable.
+            local cmd = build_cmd(runnable)
+            table.insert(cmds, cmd)
+        end
+
+        -- Display as popup.
+        telescope.show_popups(cmds, config)
     end)
 end
 

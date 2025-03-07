@@ -18,6 +18,8 @@ function M.run_single_test()
         rust.execute_single(M.config)
     elseif lang_name == "go" then
         go.execute_single(M.config)
+    else
+        vim.notify("language not supported", vim.log.levels.ERROR)
     end
 end
 
@@ -27,11 +29,22 @@ function M.run_tests_in_file()
         rust.execute_package(M.config)
     elseif lang_name == "go" then
         go.execute_package(M.config)
+    else
+        vim.notify("language not supported", vim.log.levels.ERROR)
     end
 end
 
 function M.rerun_test()
     term.execute_cache(M.config)
+end
+
+function M.show_runnables()
+    local lang_name = vim.bo.filetype
+    if lang_name == "rust" then
+        rust.show_runnables(M.config)
+    else
+        vim.notify("language not supported", vim.log.levels.ERROR)
+    end
 end
 
 return M
