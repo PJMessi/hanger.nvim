@@ -22,7 +22,7 @@ Use your preferred plugin manager to install the plugin.
 ### Using Lazy
 ```lua
 {
-    dir = "https://github.com/PJMessi/hanger",
+    "https://github.com/PJMessi/hanger",
     lazy = false,
     cmd = { "RunSingleTest", "RerunSingleTest", "RunFileTests", "ShowRunnables" },
     dependencies = {
