@@ -1,6 +1,8 @@
 local M = {}
 local rust = require("hanger.test_actions.rust")
 local go = require("hanger.test_actions.go")
+local javascript = require("hanger.test_actions.javascript")
+local typescript = require("hanger.test_actions.typescript")
 local term = require("hanger.test_actions.terminal")
 
 M.config = {
@@ -18,8 +20,12 @@ function M.run_single_test()
         rust.execute_single(M.config)
     elseif lang_name == "go" then
         go.execute_single(M.config)
+    elseif lang_name == "javascript" then
+        javascript.execute_single(M.config)
+    elseif lang_name == "typescript" then
+        typescript.execute_single(M.config)
     else
-        vim.notify("language not supported", vim.log.levels.ERROR)
+        -- vim.notify("language not supported", vim.log.levels.ERROR)
     end
 end
 
@@ -29,6 +35,10 @@ function M.run_tests_in_file()
         rust.execute_package(M.config)
     elseif lang_name == "go" then
         go.execute_package(M.config)
+    elseif lang_name == "javascript" then
+        javascript.execute_package(M.config)
+    elseif lang_name == "typescript" then
+        typescript.execute_package(M.config)
     else
         vim.notify("language not supported", vim.log.levels.ERROR)
     end
@@ -44,6 +54,10 @@ function M.show_runnables()
         rust.show_runnables(M.config)
     elseif lang_name == "go" then
         go.show_runnables(M.config)
+    elseif lang_name == "javascript" then
+        javascript.show_runnables(M.config)
+    elseif lang_name == "typescript" then
+        typescript.show_runnables(M.config)
     else
         vim.notify("language not supported", vim.log.levels.ERROR)
     end

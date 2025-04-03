@@ -64,4 +64,16 @@ function M.starts_with(str, prefix)
     return string.sub(str, 1, #prefix) == prefix
 end
 
+-- Returns the relative path for the current buffer.
+function M.get_rel_path()
+    -- Get the full path of the current file
+    local full_path = vim.fn.expand("%:p")
+
+    -- Get the current working directory
+    local cwd = vim.fn.getcwd()
+
+    -- Return the relative path by removing the current working directory part
+    return string.sub(full_path, #cwd + 2)
+end
+
 return M
