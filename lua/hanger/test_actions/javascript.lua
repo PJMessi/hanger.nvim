@@ -3,9 +3,17 @@ local utils = require("hanger.test_actions.utils")
 local term = require("hanger.test_actions.terminal")
 local telescope = require("hanger.test_actions.telescope")
 
+-- Jest pattern matching fails when there is special chars in the pattern. This function escapes the
+-- such special chars.
+local function escape_pattern(text)
+    local modified_string  = text:gsub("([%.%+%-%*%?%^%$%(%)%[%]%{%}%|\\])", "\\%1")
+    return modified_string
+end
+
 local function build_cmd(rel_path, test_description_message)
     if test_description_message then
-        return string.format("./node_modules/.bin/jest ./%s -t '%s'", rel_path, test_description_message)
+        local escaped_description = escape_pattern(test_description_message)
+        return string.format("./node_modules/.bin/jest ./%s -t '%s'", rel_path, escaped_description)
     end
 
     return string.format("./node_modules/.bin/jest ./%s", rel_path)
@@ -40,8 +48,6 @@ local function extract_description(node, description)
             else
                 description = describe_text .. " " .. description
             end
-
-            print(description)
         end
     end
 

@@ -2,15 +2,20 @@ local M = {}
 local cmd_cache = nil
 
 local function execute_in_zellij(cmd, config)
-    -- Execute the Zellij command
-    local zellij_cmd = "zellij action new-pane "
+    -- Base Zellij command
+    local zellij_cmd = "zellij action new-pane"
 
+    -- Add floating option
     if config.floating_pane then
-        zellij_cmd = zellij_cmd .. "-f -- " .. cmd
-    else
-        zellij_cmd = zellij_cmd .. "-- " .. cmd
+        zellij_cmd = zellij_cmd .. " -f"
     end
 
+    zellij_cmd = zellij_cmd .. " --name " .. vim.fn.shellescape("TEST RUNNER")
+
+    -- Add the actual command to run
+    zellij_cmd = zellij_cmd .. " -- " .. cmd
+
+    -- Execute the Zellij command
     vim.fn.system(zellij_cmd)
 end
 
@@ -36,6 +41,7 @@ local function execute_in_nvim_term(cmd, _)
 end
 
 function M.execute(cmd, config)
+    vim.notify(cmd, vim.log.levels.INFO)
     cmd_cache = cmd
 
     if config.output == "zellij" then
