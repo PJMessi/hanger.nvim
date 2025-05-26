@@ -34,7 +34,16 @@ local function is_test_func_call(node)
     return name_text == "describe" or name_text == "test" or name_text == "it"
 end
 
--- Extracts the test description message.
+--- Recursively extracts the full test name from a nested Jest test node.
+-- It builds two versions of the description:
+-- 1. `description`: space-separated for use in the Jest CLI (`-t` argument)
+-- 2. `display_val`: display-friendly with `->` separators for Telescope UI
+--
+-- @param node userdata Treesitter node representing a test/describe/it call
+-- @param description string Accumulated space-separated description (for Jest command)
+-- @param display_val string Accumulated display-formatted description (for UI)
+-- @return string description for Jest command
+-- @return string display description for Telescope UI
 local function extract_description(node, description, display_val)
     local arg_node = node:child(1)
     if arg_node and arg_node:type() == "arguments" then
@@ -79,10 +88,6 @@ local function get_lang(is_typescript)
     return "javascript"
 end
 
-local function get_cmd_dispay(cmd)
-  return string.match(cmd, "'(.-)'")
-end
-
 function Javascript.execute_single(config, is_typescript)
     -- Get buffer and parser
     local buf = vim.api.nvim_get_current_buf()
@@ -101,7 +106,7 @@ function Javascript.execute_single(config, is_typescript)
     end
     if not node then return nil, nil end
 
-    local test_description = extract_description(node, "", "")
+    local test_description = extract_description(node)
     local rel_path = utils.get_rel_path()
     local cmd = build_cmd(rel_path, test_description)
     term.execute(cmd, config)
@@ -140,10 +145,16 @@ function Javascript.show_runnables(config, is_typescript)
     for id, node, metadata in query:iter_captures(root, buf) do
         local capture_name = query.captures[id]
         if capture_name == "test_call" then
+            local start_row, _, _, _ = node:range() -- Get the starting row of the node
             -- For full function call nodes
-            local test_description, display_value = extract_description(node, "", "")
+            local test_description, display_value = extract_description(node)
             local cmd = build_cmd(rel_path, test_description)
-            table.insert(cmds, { value=cmd, display=display_value})
+            table.insert(cmds, {
+                value=cmd,
+                display=display_value,
+                row = start_row,
+                filename = vim.api.nvim_buf_get_name(buf)
+            })
         end
     end
 
