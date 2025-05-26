@@ -5,39 +5,49 @@ local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local term = require("hanger.test_actions.terminal")
 local previewers = require("telescope.previewers")
+local entry_display = require("telescope.pickers.entry_display")
 local Telescope = {}
 
+local layout_config = { width = 0.8, height = 0.99, preview_width = 0.4 }
+
 function Telescope.show_popups(cmds, config)
-    local has_row = false
-    for _, entry in ipairs(cmds) do
-      if entry.row and entry.filename then
-        has_row = true
-        break
-      end
+    local displayer = entry_display.create {
+      separator = " ",
+      items = config.show_test_type and {
+        { width = 0.8 },
+        { width = 0.1 },
+      } or {
+        { width = 0.9 },
+        { width = 0.0 },
+      }
+    }
+
+    local function make_display(entry)
+      return displayer {
+        -- { item, "color, example: TelescopeResultsSpecialComment" },
+        { entry.display_name },
+        { entry.test_type, "TelescopeResultsFunction" },
+      }
     end
 
-    pickers.new({
-        layout_config = {
-            width = 0.8,  -- 60% of screen width
-            height = 0.99, -- 40% of screen height
-            -- Optional: control preview window size
-            preview_width = 0.4 -- 50% of picker width
-        },
-    }, {
+    pickers.new({ layout_config = layout_config }, {
         prompt_title = "Select runnable",
         finder = finders.new_table({
             results = cmds,
             entry_maker = function(entry)
                 return {
+                  display = make_display,
+
                   value = entry.value,
-                  display = entry.display,
-                  ordinal = entry.display,
+                  display_name = entry.display_name,
+                  ordinal = entry.display_name,
                   filename = entry.filename,
-                  row = entry.row,
+                  test_row_num = entry.test_row_num,
+                  test_type = entry.test_type or "",
                 }
             end,
         }),
-        previewer = has_row and previewers.new_buffer_previewer({
+        previewer = config.show_previewer and previewers.new_buffer_previewer({
             title = "Preview",
             define_preview = function(self, entry, status)
               local filepath = entry.filename or vim.api.nvim_buf_get_name(0)
@@ -50,7 +60,7 @@ function Telescope.show_popups(cmds, config)
                 bufname = self.state.bufname,
                 callback = function(bufnr2)
                   -- Set cursor position and highlight row after file is loaded and highlighted
-                  local row = entry.row
+                  local row = entry.test_row_num
                   if row then
                     vim.schedule(function()
                       if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(bufnr2) then

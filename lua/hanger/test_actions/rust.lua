@@ -103,7 +103,7 @@ function Rust.show_runnables(config)
         for _, runnable in ipairs(result) do
             -- Build command from runnable.
             local cmd = build_cmd(runnable)
-            table.insert(cmds, { value=cmd, display=cmd })
+            table.insert(cmds, { value=cmd, display_name=cmd })
         end
 
         -- Display as popup.

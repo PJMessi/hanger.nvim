@@ -1,6 +1,7 @@
 local Go = {}
 local term = require("hanger.test_actions.terminal")
 local telescope = require("hanger.test_actions.telescope")
+local utils = require("hanger.test_actions.utils")
 
 local function find_suite_name(buf, node)
     -- Get receiver type
@@ -155,14 +156,14 @@ function Go.show_runnables(config)
 
             -- Check if it's a test function (starts with Test)
             if is_test_func(func_name) then
-                local start_row, _, _, _ = node:range() -- Get the starting row of the node
+                local start_row = utils.get_node_start_row_num(node)
 
                 if capture_name == "func" then
                     local cmd = build_cmd(rel_path, func_name, false)
                     table.insert(cmds, {
                         value=cmd,
-                        display=func_name,
-                        row = start_row,
+                        display_name=func_name,
+                        test_row_num = start_row,
                         filename = vim.api.nvim_buf_get_name(buf)
                     })
                 elseif capture_name == "method" then
@@ -171,8 +172,8 @@ function Go.show_runnables(config)
                     local cmd = build_cmd(rel_path, func_name, true, suite_wrapper)
                     table.insert(cmds, {
                         value=cmd,
-                        display=func_name,
-                        row = start_row,
+                        display_name=func_name,
+                        test_row_num = start_row,
                         filename = vim.api.nvim_buf_get_name(buf)
                     })
                 end
@@ -180,6 +181,7 @@ function Go.show_runnables(config)
         end
     end
 
+    config.show_previewer = true
     telescope.show_popups(cmds, config)
 end
 

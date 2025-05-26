@@ -76,4 +76,10 @@ function M.get_rel_path()
     return string.sub(full_path, #cwd + 2)
 end
 
+-- Returns the starting row number for the given node.
+function M.get_node_start_row_num(node)
+    local start_row, _, _, _ = node:range()
+    return start_row
+end
+
 return M

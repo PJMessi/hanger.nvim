@@ -63,7 +63,7 @@ local function extract_description(node, description, display_val)
             if not display_val or display_val == "" then
                 display_val = describe_text
             else
-                display_val = describe_text .. " -> " .. display_val
+                display_val = describe_text .. " - " .. display_val
             end
         end
     end
@@ -118,6 +118,19 @@ function Javascript.execute_package(config)
     term.execute(cmd, config)
 end
 
+-- Returns 'describe' or 'test' or 'it'.
+local function extract_test_type(node, query, root, buf)
+    local test_type
+    for id2, node2 in query:iter_captures(root, buf) do
+        if query.captures[id2] == "func_name" and node2 == node:field("function")[1] then
+            test_type = vim.treesitter.get_node_text(node2, buf)
+            break
+        end
+    end
+
+    return test_type
+end
+
 function Javascript.show_runnables(config, is_typescript)
     local lang = get_lang(is_typescript)
 
@@ -145,19 +158,23 @@ function Javascript.show_runnables(config, is_typescript)
     for id, node, metadata in query:iter_captures(root, buf) do
         local capture_name = query.captures[id]
         if capture_name == "test_call" then
-            local start_row, _, _, _ = node:range() -- Get the starting row of the node
-            -- For full function call nodes
+            local start_row = utils.get_node_start_row_num(node)
             local test_description, display_value = extract_description(node)
             local cmd = build_cmd(rel_path, test_description)
+            local test_type = extract_test_type(node, query, root, buf)
+
             table.insert(cmds, {
                 value=cmd,
-                display=display_value,
-                row = start_row,
-                filename = vim.api.nvim_buf_get_name(buf)
+                display_name=display_value,
+                test_row_num = start_row,
+                filename = vim.api.nvim_buf_get_name(buf),
+                test_type = test_type
             })
         end
     end
 
+    config.show_previewer = true
+    config.show_test_type = true
     telescope.show_popups(cmds, config)
 end
 
