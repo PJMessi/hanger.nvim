@@ -18,7 +18,14 @@ function Telescope.show_popups(cmds, config)
     }, {
         prompt_title = "Select runnable",
         finder = finders.new_table({
-            results = cmds
+            results = cmds,
+            entry_maker = function(entry)
+                return {
+                  value = entry.value,
+                  display = entry.display,
+                  ordinal = entry.display,
+                }
+            end,
         }),
         sorter = conf.generic_sorter({}),
         attach_mappings = function(prompt_bufnr, _)

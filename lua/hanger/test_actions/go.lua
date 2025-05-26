@@ -160,7 +160,8 @@ function Go.show_runnables(config)
                 elseif capture_name == "method" then
                     -- Method on a suite
                     local suite_wrapper = find_suite_name(buf, node)
-                    table.insert(cmds, build_cmd(rel_path, func_name, true, suite_wrapper))
+                    local cmd = build_cmd(rel_path, func_name, true, suite_wrapper)
+                    table.insert(cmds, { value=cmd, display=cmd })
                 end
             end
         end

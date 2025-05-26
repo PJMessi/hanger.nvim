@@ -13,10 +13,10 @@ end
 local function build_cmd(rel_path, test_description_message)
     if test_description_message then
         local escaped_description = escape_pattern(test_description_message)
-        return string.format("./node_modules/.bin/jest ./%s -t '%s'", rel_path, escaped_description)
+        return string.format("./node_modules/.bin/jest ./%s -t '%s' --runInBand", rel_path, escaped_description)
     end
 
-    return string.format("./node_modules/.bin/jest ./%s", rel_path)
+    return string.format("./node_modules/.bin/jest ./%s --runInBand", rel_path)
 end
 
 -- Checks if the provided node is 'describe', 'test' or 'it' function call. Example: describe("some test case", ...)
@@ -69,6 +69,10 @@ local function get_lang(is_typescript)
     end
 
     return "javascript"
+end
+
+local function get_cmd_dispay(cmd)
+  return string.match(cmd, "'(.-)'")
 end
 
 function Javascript.execute_single(config, is_typescript)
@@ -131,7 +135,7 @@ function Javascript.show_runnables(config, is_typescript)
             -- For full function call nodes
             local test_description = extract_description(node, "")
             local cmd = build_cmd(rel_path, test_description)
-            table.insert(cmds, cmd)
+            table.insert(cmds, { value=cmd, display=get_cmd_dispay(cmd)})
         end
     end
 

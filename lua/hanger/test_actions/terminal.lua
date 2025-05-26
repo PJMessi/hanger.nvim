@@ -1,18 +1,20 @@
 local M = {}
 local cmd_cache = nil
 
+-- Base Zellij command
 local function execute_in_zellij(cmd, config)
     -- Base Zellij command
     local zellij_cmd = "zellij action new-pane"
 
-    -- Add floating option
+    -- Use floating pane and set as full-screen (visually)
     if config.floating_pane then
         zellij_cmd = zellij_cmd .. " -f"
     end
 
+    -- Give the pane a name
     zellij_cmd = zellij_cmd .. " --name " .. vim.fn.shellescape("TEST RUNNER")
 
-    -- Add the actual command to run
+    -- Append the command to run
     zellij_cmd = zellij_cmd .. " -- " .. cmd
 
     -- Execute the Zellij command
