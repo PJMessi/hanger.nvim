@@ -159,9 +159,9 @@ function Go.show_runnables(config)
 
                 if capture_name == "func" then
                     local cmd = build_cmd(rel_path, func_name, false)
-                    table.insert(cmds, { 
+                    table.insert(cmds, {
                         value=cmd,
-                        display=cmd,
+                        display=func_name,
                         row = start_row,
                         filename = vim.api.nvim_buf_get_name(buf)
                     })
@@ -171,7 +171,7 @@ function Go.show_runnables(config)
                     local cmd = build_cmd(rel_path, func_name, true, suite_wrapper)
                     table.insert(cmds, {
                         value=cmd,
-                        display=cmd,
+                        display=func_name,
                         row = start_row,
                         filename = vim.api.nvim_buf_get_name(buf)
                     })
