@@ -155,13 +155,26 @@ function Go.show_runnables(config)
 
             -- Check if it's a test function (starts with Test)
             if is_test_func(func_name) then
+                local start_row, _, _, _ = node:range() -- Get the starting row of the node
+
                 if capture_name == "func" then
-                    table.insert(cmds, build_cmd(rel_path, func_name, false))
+                    local cmd = build_cmd(rel_path, func_name, false)
+                    table.insert(cmds, { 
+                        value=cmd,
+                        display=cmd,
+                        row = start_row,
+                        filename = vim.api.nvim_buf_get_name(buf)
+                    })
                 elseif capture_name == "method" then
                     -- Method on a suite
                     local suite_wrapper = find_suite_name(buf, node)
                     local cmd = build_cmd(rel_path, func_name, true, suite_wrapper)
-                    table.insert(cmds, { value=cmd, display=cmd })
+                    table.insert(cmds, {
+                        value=cmd,
+                        display=cmd,
+                        row = start_row,
+                        filename = vim.api.nvim_buf_get_name(buf)
+                    })
                 end
             end
         end
