@@ -10,7 +10,7 @@ local Telescope = {}
 function Telescope.show_popups(cmds, config)
     local has_row = false
     for _, entry in ipairs(cmds) do
-      if entry.row then
+      if entry.row and entry.filename then
         has_row = true
         break
       end
