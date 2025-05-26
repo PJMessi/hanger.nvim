@@ -18,10 +18,10 @@ function Telescope.show_popups(cmds, config)
 
     pickers.new({
         layout_config = {
-            width = 0.6,  -- 60% of screen width
-            height = 0.8, -- 40% of screen height
+            width = 0.8,  -- 60% of screen width
+            height = 0.99, -- 40% of screen height
             -- Optional: control preview window size
-            preview_width = 0.5 -- 50% of picker width
+            preview_width = 0.4 -- 50% of picker width
         },
     }, {
         prompt_title = "Select runnable",
