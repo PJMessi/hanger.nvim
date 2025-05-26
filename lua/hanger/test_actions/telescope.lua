@@ -72,15 +72,15 @@ function Telescope.show_popups(cmds, config)
                           -- Set cursor position
                           vim.api.nvim_win_set_cursor(win, { target_row, 0 })
 
-                          -- Set window view to show target row at the top
-                          vim.api.nvim_win_call(win, function()
-                            vim.fn.winrestview({
-                              topline = target_row,
-                              lnum = target_row,
-                              col = 0,
-                              curswant = 0
-                            })
-                          end)
+                          -- -- Set window view to show target row at the top
+                          -- vim.api.nvim_win_call(win, function()
+                          --   vim.fn.winrestview({
+                          --     topline = target_row,
+                          --     lnum = target_row,
+                          --     col = 0,
+                          --     curswant = 0
+                          --   })
+                          -- end)
 
                           -- Create highlight group for the target row if it doesn't exist
                           vim.api.nvim_set_hl(0, 'TelescopePreviewLine', {
