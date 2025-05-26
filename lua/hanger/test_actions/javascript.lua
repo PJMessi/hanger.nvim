@@ -35,18 +35,26 @@ local function is_test_func_call(node)
 end
 
 -- Extracts the test description message.
-local function extract_description(node, description)
+local function extract_description(node, description, display_val)
     local arg_node = node:child(1)
     if arg_node and arg_node:type() == "arguments" then
         local str_node = arg_node:child(1) -- Usually the first argument
         if str_node and (str_node:type() == "string" or str_node:type() == "template_string") then
             local describe_text = vim.treesitter.get_node_text(str_node, 0)
+
             describe_text = string.gsub(describe_text, "'", "")
             describe_text = string.gsub(describe_text, "\"", "")
+
             if not description or description == "" then
                 description = describe_text
             else
                 description = describe_text .. " " .. description
+            end
+
+            if not display_val or display_val == "" then
+                display_val = describe_text
+            else
+                display_val = describe_text .. " -> " .. display_val
             end
         end
     end
@@ -57,10 +65,10 @@ local function extract_description(node, description)
     end
 
     if node then
-        description = extract_description(node, description)
+        return extract_description(node, description, display_val)
     end
 
-    return description
+    return description, display_val
 end
 
 local function get_lang(is_typescript)
@@ -93,7 +101,7 @@ function Javascript.execute_single(config, is_typescript)
     end
     if not node then return nil, nil end
 
-    local test_description = extract_description(node, "")
+    local test_description = extract_description(node, "", "")
     local rel_path = utils.get_rel_path()
     local cmd = build_cmd(rel_path, test_description)
     term.execute(cmd, config)
@@ -133,9 +141,9 @@ function Javascript.show_runnables(config, is_typescript)
         local capture_name = query.captures[id]
         if capture_name == "test_call" then
             -- For full function call nodes
-            local test_description = extract_description(node, "")
+            local test_description, display_value = extract_description(node, "", "")
             local cmd = build_cmd(rel_path, test_description)
-            table.insert(cmds, { value=cmd, display=get_cmd_dispay(cmd)})
+            table.insert(cmds, { value=cmd, display=display_value})
         end
     end
 
