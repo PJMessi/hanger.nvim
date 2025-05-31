@@ -3,6 +3,21 @@ local utils = require("hanger.test_actions.utils")
 local term = require("hanger.test_actions.terminal")
 local telescope = require("hanger.test_actions.telescope")
 
+
+local function print_node_text(node)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local start_row, start_col, end_row, end_col = node:range()
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start_row, end_row + 1, false)
+  if #lines == 0 then return end
+
+  -- Trim the first and last line to match exact column range
+  lines[1] = string.sub(lines[1], start_col + 1)
+  lines[#lines] = string.sub(lines[#lines], 1, end_col)
+
+  print(table.concat(lines, "\n"))
+end
+
 --- Checks if the provided mod is a test mod.
 --- @param node TSNode test mod node
 --- @return boolean result
@@ -172,8 +187,8 @@ local function get_test_at_cursor()
     end
     local test_node = node
 
+    -- Don't include func name for mod test node.
     local func_name = nil
-
     if node:type() == "function_item" then
         local name_node = test_node:field("name")[1]
         if not name_node then return nil, nil end
@@ -246,6 +261,94 @@ function Rust.execute_package(config)
     local mods = get_test_mods(nil)
     local cmd = build_cmd(nil, mods)
     term.execute(cmd, config)
+end
+
+local function extract_test_nodes(node, buf, cmd)
+    if not cmd then cmd = {} end
+
+    if node:type() == "function_item" then
+        if is_test_func(node) then
+            table.insert(cmd, node)
+        end
+
+    elseif node:type() == "mod_item"then
+        if is_test_mod(node) then
+            table.insert(cmd, node)
+            for i = 0, node:child_count() - 1 do
+                local child = node:child(i)
+                extract_test_nodes(child, buf, cmd)
+            end
+        end
+
+    elseif node:type() == "declaration_list" then
+        for i = 0, node:child_count() - 1 do
+            local child = node:child(i)
+            extract_test_nodes(child, buf, cmd)
+        end
+    end
+
+    return cmd
+end
+
+function Rust.show_runnables(config)
+    -- Get buffer and parser
+    local buf = vim.api.nvim_get_current_buf()
+    local parser = vim.treesitter.get_parser(buf, "rust")
+    if not parser then return {} end
+
+    -- Get the root node
+    local root = parser:parse()[1]:root()
+
+    -- Query for all function and method declarations
+    local query_str = [[
+        (mod_item) @mod
+    ]]
+
+    local query = vim.treesitter.query.parse("rust", query_str)
+
+    local test_nodes = {}
+
+    for id, node in query:iter_captures(root, buf) do
+        if node:parent() == root then
+            test_nodes = extract_test_nodes(node, buf, test_nodes)
+        end
+    end
+
+    local cmds = {}
+    local filename = vim.api.nvim_buf_get_name(buf)
+    for i, test_node in ipairs(test_nodes) do
+        local mods = get_test_mods(test_node)
+
+        local test_name = nil
+        local test_type = "function"
+
+        local name_node = test_node:field("name")[1]
+        if not name_node then return nil, nil end
+        local display_name = vim.treesitter.get_node_text(name_node, buf)
+
+        if test_node:type() == "function_item" then
+            test_name = display_name
+        else
+            test_type = "mod"
+        end
+
+        local cmd = build_cmd(test_name, mods)
+        local start_row = utils.get_node_start_row_num(test_node)
+
+
+        table.insert(cmds, {
+            value=cmd,
+            display_name=display_name,
+            test_row_num = start_row,
+            filename = filename,
+            test_type = test_type
+        })
+
+    end
+
+    config.show_test_type = true
+    config.show_previewer = true
+    telescope.show_popups(cmds, config)
 end
 
 return Rust
