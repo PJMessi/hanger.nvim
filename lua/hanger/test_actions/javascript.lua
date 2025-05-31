@@ -3,23 +3,28 @@ local utils = require("hanger.test_actions.utils")
 local term = require("hanger.test_actions.terminal")
 local telescope = require("hanger.test_actions.telescope")
 
--- Jest pattern matching fails when there is special chars in the pattern. This function escapes the
--- such special chars.
+--- Jest pattern matching fails when there is special chars in the pattern. This function escapes such special chars.
+--- @param text string
+--- @return string
 local function escape_pattern(text)
-    local modified_string  = text:gsub("([%.%+%-%*%?%^%$%(%)%[%]%{%}%|\\])", "\\%1")
-    return modified_string
+    local result  = text:gsub("([%.%+%-%*%?%^%$%(%)%[%]%{%}%|\\])", "\\%1")
+    return result
 end
 
-local function build_cmd(rel_path, test_description_message)
-    if test_description_message then
-        local escaped_description = escape_pattern(test_description_message)
-        return string.format("./node_modules/.bin/jest ./%s -t '%s' --runInBand", rel_path, escaped_description)
+--- Builds a `jest` command string based on the test context.
+--- @param rel_path string Relative path of the test file.
+--- @param test_name? string test description provided in the describe/test/it function call. 
+local function build_cmd(rel_path, test_name)
+    if test_name then
+        local filtered_test_name = escape_pattern(test_name)
+        return string.format("./node_modules/.bin/jest ./%s -t '%s' --runInBand", rel_path, filtered_test_name)
     end
 
     return string.format("./node_modules/.bin/jest ./%s --runInBand", rel_path)
 end
 
--- Checks if the provided node is 'describe', 'test' or 'it' function call. Example: describe("some test case", ...)
+--- Checks if the provided node is 'describe', 'test' or 'it' function call. Example: 
+--- describe("some test case", ...)
 local function is_test_func_call(node)
     if node:type() ~= "call_expression" then
         return false
@@ -35,16 +40,12 @@ local function is_test_func_call(node)
 end
 
 --- Recursively extracts the full test name from a nested Jest test node.
--- It builds two versions of the description:
--- 1. `description`: space-separated for use in the Jest CLI (`-t` argument)
--- 2. `display_val`: display-friendly with `->` separators for Telescope UI
---
--- @param node userdata Treesitter node representing a test/describe/it call
--- @param description string Accumulated space-separated description (for Jest command)
--- @param display_val string Accumulated display-formatted description (for UI)
--- @return string description for Jest command
--- @return string display description for Telescope UI
-local function extract_description(node, description, display_val)
+--- @param node TSNode Treesitter node representing a test/describe/it call
+--- @param test_name? string Accumulated space-separated description (for Jest command)
+--- @param display_val? string Accumulated display-formatted description (for UI)
+--- @return string|nil test_name for Jest command
+--- @return string|nil display_name description for Telescope UI
+local function extract_test_name(node, test_name, display_val)
     local arg_node = node:child(1)
     if arg_node and arg_node:type() == "arguments" then
         local str_node = arg_node:child(1) -- Usually the first argument
@@ -54,10 +55,10 @@ local function extract_description(node, description, display_val)
             describe_text = string.gsub(describe_text, "'", "")
             describe_text = string.gsub(describe_text, "\"", "")
 
-            if not description or description == "" then
-                description = describe_text
+            if not test_name or test_name == "" then
+                test_name = describe_text
             else
-                description = describe_text .. " " .. description
+                test_name = describe_text .. " " .. test_name
             end
 
             if not display_val or display_val == "" then
@@ -68,16 +69,16 @@ local function extract_description(node, description, display_val)
         end
     end
 
-    node = node:parent()
-    while node and is_test_func_call(node) == false do
-        node = node:parent()
+    local parent_node = node:parent()
+    while parent_node and is_test_func_call(parent_node) == false do
+        parent_node = parent_node:parent()
     end
 
-    if node then
-        return extract_description(node, description, display_val)
+    if parent_node then
+        return extract_test_name(parent_node, test_name, display_val)
     end
 
-    return description, display_val
+    return test_name, display_val
 end
 
 local function get_lang(is_typescript)
@@ -106,7 +107,7 @@ function Javascript.execute_single(config, is_typescript)
     end
     if not node then return nil, nil end
 
-    local test_description = extract_description(node)
+    local test_description = extract_test_name(node)
     local rel_path = utils.get_rel_path()
     local cmd = build_cmd(rel_path, test_description)
     term.execute(cmd, config)
@@ -159,7 +160,7 @@ function Javascript.show_runnables(config, is_typescript)
         local capture_name = query.captures[id]
         if capture_name == "test_call" then
             local start_row = utils.get_node_start_row_num(node)
-            local test_description, display_value = extract_description(node)
+            local test_description, display_value = extract_test_name(node)
             local cmd = build_cmd(rel_path, test_description)
             local test_type = extract_test_type(node, query, root, buf)
 
