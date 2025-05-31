@@ -10,12 +10,31 @@ local Telescope = {}
 
 local layout_config = { width = 0.8, height = 0.99, preview_width = 0.4 }
 
+-- Returns the index of the item in the picker to focus on by default.
+local function get_selection_item_index(cmds)
+    local current_row = vim.api.nvim_win_get_cursor(0)[1] - 1  -- Convert to 0-based
+    -- Find the item that's just above the cursor
+    local target_index = 1  -- Default to first item
+    local closest_row = -1
+
+    for i, cmd in ipairs(cmds) do
+        if cmd.test_row_num and cmd.test_row_num < current_row then
+            if cmd.test_row_num > closest_row then
+                closest_row = cmd.test_row_num
+                target_index = i
+            end
+        end
+    end
+
+    return target_index
+end
+
 function Telescope.show_popups(cmds, config)
     local displayer = entry_display.create {
       separator = " ",
       items = config.show_test_type and {
-        { width = 0.8 },
-        { width = 0.1 },
+        { width = 0.7 },
+        { width = 0.2 },
       } or {
         { width = 0.9 },
         { width = 0.0 },
@@ -30,8 +49,11 @@ function Telescope.show_popups(cmds, config)
       }
     end
 
+    local target_index = get_selection_item_index(cmds)
+
     pickers.new({ layout_config = layout_config }, {
         prompt_title = "Select runnable",
+        default_selection_index = target_index,
         finder = finders.new_table({
             results = cmds,
             entry_maker = function(entry)
@@ -66,7 +88,6 @@ function Telescope.show_popups(cmds, config)
                       if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(bufnr2) then
                         local total_lines = vim.api.nvim_buf_line_count(bufnr2)
                         local target_row = row + 1
-                        print("moving cursor to row:", target_row, "of", total_lines)
 
                         if target_row >= 1 and target_row <= total_lines then
                           -- Set cursor position
