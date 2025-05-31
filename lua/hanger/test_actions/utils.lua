@@ -82,4 +82,12 @@ function M.get_node_start_row_num(node)
     return start_row
 end
 
+function M.reverse_table(t)
+    local reversed = {}
+    for i = #t, 1, -1 do
+        table.insert(reversed, t[i])
+    end
+    return reversed
+end
+
 return M
