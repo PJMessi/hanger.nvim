@@ -120,8 +120,9 @@ end
 
 --- Returns the relative path for the current package.
 local function get_package_rel_path()
-    local file_path = vim.fn.expand("%")
-    return vim.fn.fnamemodify(file_path, ":h")
+    local file_dir = vim.fn.expand("%:p:h")
+    local cwd = vim.fn.getcwd()
+    return vim.fn.fnamemodify(file_dir, ":s?" .. cwd .. "/??")
 end
 
 --- Builds a `go test` command string based on the test context.
@@ -190,6 +191,7 @@ function Go.show_runnables(config)
     local query = vim.treesitter.query.parse("go", query_str)
 
     local cmds = {}
+    local filename = vim.api.nvim_buf_get_name(buf)
     for id, node in query:iter_captures(root, buf) do
         local capture_name = query.captures[id]
         local name_node = node:field("name")[1]
@@ -199,7 +201,6 @@ function Go.show_runnables(config)
 
             if is_test_func(func_name) then
                 local start_row = utils.get_node_start_row_num(node)
-                local filename = vim.api.nvim_buf_get_name(buf)
 
                 if capture_name == "func" then
                     local cmd = build_cmd(func_name, false)
