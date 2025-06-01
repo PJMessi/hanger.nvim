@@ -57,7 +57,7 @@ function Telescope.show_popups(cmds, config)
     local target_index = get_selection_item_index(cmds)
 
     pickers.new({ layout_config = layout_config }, {
-        prompt_title = "Select runnable",
+        prompt_title = "Select test",
         default_selection_index = target_index,
         finder = finders.new_table({
             results = cmds,
