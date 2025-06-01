@@ -1,70 +1,6 @@
 local M = {}
 
-local function_nodes = {
-    rust = "function_item",
-    lua = "function_definition",
-    python = "function_definition",
-    javascript = "function_declaration",
-    typescript = "function_declaration",
-    go = "function_declaration",
-    c = "function_definition",
-    cpp = "function_definition",
-    java = "method_declaration",
-}
-
--- Returns the function name within which the cursor lies currently.
-function M.get_outer_function_name()
-    local ts_utils = require("nvim-treesitter.ts_utils")
-
-    local node = ts_utils.get_node_at_cursor()
-    if not node then
-        vim.notify("no nodes found at the cursor", vim.log.levels.WARN)
-        return nil
-    end
-
-    local lang_name = vim.bo.filetype
-    local func_type = function_nodes[lang_name]
-    if not func_type then
-        vim.notify("unsupported programming language", vim.log.levels.WARN)
-        return nil
-    end
-
-    -- Traverse up the AST to find the nearest function node
-    while node do
-        if node:type() == func_type then
-            local name_node = node:field("name")[1]
-            if name_node then
-                return vim.treesitter.get_node_text(name_node, 0)
-            end
-        end
-        node = node:parent()
-    end
-
-    return nil
-end
-
--- Checks if the string has prefix.
-function M.starts_with(str, prefix)
-    -- Handle nil inputs
-    if str == nil or prefix == nil then
-        return false
-    end
-
-    -- Handle empty prefix (everything starts with an empty string)
-    if prefix == "" then
-        return true
-    end
-
-    -- Make sure str is at least as long as prefix
-    if #str < #prefix then
-        return false
-    end
-
-    -- Check if the beginning of str matches prefix
-    return string.sub(str, 1, #prefix) == prefix
-end
-
--- Returns the relative path for the current buffer.
+--- Returns the relative path for the current buffer from the project root.
 function M.get_rel_path()
     -- Get the full path of the current file
     local full_path = vim.fn.expand("%:p")
@@ -76,7 +12,7 @@ function M.get_rel_path()
     return string.sub(full_path, #cwd + 2)
 end
 
--- Returns the starting row number for the given node.
+--- Returns the starting row number for the given node.
 function M.get_node_start_row_num(node)
     local start_row, _, _, _ = node:range()
     return start_row
@@ -88,6 +24,21 @@ function M.reverse_table(t)
         table.insert(reversed, t[i])
     end
     return reversed
+end
+
+--- Prints content of the given node.
+function M.print_node_text(node)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local start_row, start_col, end_row, end_col = node:range()
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start_row, end_row + 1, false)
+  if #lines == 0 then return end
+
+  -- Trim the first and last line to match exact column range
+  lines[1] = string.sub(lines[1], start_col + 1)
+  lines[#lines] = string.sub(lines[#lines], 1, end_col)
+
+  print(table.concat(lines, "\n"))
 end
 
 return M

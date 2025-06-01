@@ -10,7 +10,7 @@ local Telescope = {}
 
 local layout_config = { width = 0.8, height = 0.99, preview_width = 0.4 }
 
--- Returns the index of the item in the picker to focus on by default.
+--- Returns the index of the item in the picker to focus on by default.
 local function get_selection_item_index(cmds)
     local current_row = vim.api.nvim_win_get_cursor(0)[1] - 1  -- Convert to 0-based
     -- Find the item that's just above the cursor
@@ -29,6 +29,11 @@ local function get_selection_item_index(cmds)
     return target_index
 end
 
+--- Shows the provided commands or configurations in a Telescope picker.
+--- @param cmds table: A list of command strings or configurations to display.
+--- @param config table: Configuration options for the popup.
+--- @field config.show_previewer boolean: Whether to show the previewer for each entry in the popup.
+--- @field config.show_test_type boolean: Whether to show the test type for each entry.
 function Telescope.show_popups(cmds, config)
     local displayer = entry_display.create {
       separator = " ",

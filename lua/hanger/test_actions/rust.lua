@@ -3,21 +3,6 @@ local utils = require("hanger.test_actions.utils")
 local term = require("hanger.test_actions.terminal")
 local telescope = require("hanger.test_actions.telescope")
 
-
-local function print_node_text(node)
-  local bufnr = vim.api.nvim_get_current_buf()
-  local start_row, start_col, end_row, end_col = node:range()
-
-  local lines = vim.api.nvim_buf_get_lines(bufnr, start_row, end_row + 1, false)
-  if #lines == 0 then return end
-
-  -- Trim the first and last line to match exact column range
-  lines[1] = string.sub(lines[1], start_col + 1)
-  lines[#lines] = string.sub(lines[#lines], 1, end_col)
-
-  print(table.concat(lines, "\n"))
-end
-
 --- Checks if the provided mod is a test mod.
 --- @param node TSNode test mod node
 --- @return boolean result
