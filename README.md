@@ -26,12 +26,6 @@ Run tests directly from Neovim — in the built-in terminal or a floating Zellij
   <img src="./execution.png" alt="Test Execution" width="45%" />
 </p>
 
-## Requirements
-- [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) – Popup UI for selecting test functions.
-- [nvim-lua/plenary.nvim](https://github.com/nvim-lua/plenary.nvim) – Required by Telescope.
-- [nvim-treesitter/nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) – Used for parsing Go test functions.
-- **Rust Analyzer** – Required for running Rust tests (`rust-analyzer` must be installed and configured in Neovim).
-
 ## Installation
 
 Use your preferred plugin manager to install the plugin.
