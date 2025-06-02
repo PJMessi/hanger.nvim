@@ -17,6 +17,15 @@ Run tests directly from Neovim — in the built-in terminal or a floating Zellij
   - Floating **Zellij** pane (optional)
   - _tmux support coming soon_
 
+<p align="center">
+  <img src="./rust.png" alt="Rust Picker" width="45%" />
+  <img src="./go.png" alt="Go Picker" width="45%" />
+</p>
+<p align="center">
+  <img src="./ts.png" alt="JS/Ts Picker" width="45%" />
+  <img src="./execution.png" alt="Test Execution" width="45%" />
+</p>
+
 ## Requirements
 - [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) – Popup UI for selecting test functions.
 - [nvim-lua/plenary.nvim](https://github.com/nvim-lua/plenary.nvim) – Required by Telescope.
