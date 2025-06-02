@@ -173,7 +173,7 @@ function Go.execute_package(config)
     term.execute(cmd, config)
 end
 
-function Go.show_runnables(config)
+function Go.show_tests(config)
     -- Get buffer and parser
     local buf = vim.api.nvim_get_current_buf()
     local parser = vim.treesitter.get_parser(buf, "go")

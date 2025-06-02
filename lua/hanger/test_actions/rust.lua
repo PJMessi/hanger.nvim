@@ -275,7 +275,7 @@ local function extract_test_nodes(node, buf, cmd)
     return cmd
 end
 
-function Rust.show_runnables(config)
+function Rust.show_tests(config)
     -- Get buffer and parser
     local buf = vim.api.nvim_get_current_buf()
     local parser = vim.treesitter.get_parser(buf, "rust")

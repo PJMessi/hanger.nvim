@@ -29,8 +29,8 @@ function Typescript.execute_package(config)
     javascript.execute_package(config)
 end
 
-function Typescript.show_runnables(config)
-    javascript.show_runnables(config, true)
+function Typescript.show_tests(config)
+    javascript.show_tests(config, true)
 end
 
 return Typescript

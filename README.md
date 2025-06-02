@@ -1,13 +1,21 @@
 # Neovim Test Runner Plugin
 
-A lightweight Neovim plugin designed to run and manage tests for Rust and Go projects. It seamlessly integrates with Neovim's terminal or Zellij, providing a convenient floating pane to execute test commands. With easy-to-use commands, it allows you to run individual tests, rerun tests, and view runnable tests directly from Neovim, improving your development workflow.
+Hanger.nvim is a lightweight and intuitive Neovim plugin for running and managing tests in Rust, Go, and JavaScript/TypeScript projects. Powered by Tree-sitter, it detects tests intelligently and provides a fast, editor-native workflow tailored for rapid iteration.
+
+Run tests directly from Neovim — in the built-in terminal or a floating Zellij pane — without breaking focus. With minimal setup and simple commands, you can instantly run the test under your cursor, browse all tests in the current file, or rerun the last executed test — perfect for tight feedback loops and fast development cycles.
 
 ## Features
-
-- **RunSingleTest**: Executes a single test function where the cursor is currently located.
-- **RunFileTests**: Runs all tests in the current file or package.
-- **RerunTest**: Re-executes the last test that was run, regardless of cursor position. Ideal for quickly iterating on tests without needing to manually locate the test function in the file again.
-- **ShowRunnables**: Displays a list of executable code segments, such as functions or tests, within the current file or project. This allows you to quickly identify and run specific sections of your code without manually searching for them.
+- 🧠 Tree-sitter powered test detection
+- 🔍 Telescope UI for discovering & running tests
+- 🚀 One-shot test execution under cursor
+- 🧪 Language support:
+  - **Rust** (`cargo test`) with a custom runner
+  - **Go** (`go test`, `testify`) with suite-aware execution
+  - **JavaScript** (`jest`) with precise control
+- 🪟 Run in:
+  - Neovim terminal (default)
+  - Floating **Zellij** pane (optional)
+  - _tmux support coming soon_
 
 ## Requirements
 - [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) – Popup UI for selecting test functions.
@@ -22,32 +30,34 @@ Use your preferred plugin manager to install the plugin.
 ### Using Lazy
 ```lua
 {
-    "https://github.com/PJMessi/hanger",
+    'https://github.com/pjmessi/hanger',
     lazy = false,
-    cmd = { "RunSingleTest", "RerunSingleTest", "RunFileTests", "ShowRunnables" },
+    cmd = { "RunTest", "ReRunTest", "RunAllTests", "ShowTests" },
     dependencies = {
-        "nvim-telescope/telescope.nvim",
-        "nvim-lua/plenary.nvim",
-        "nvim-treesitter/nvim-treesitter",
+      "nvim-telescope/telescope.nvim",
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
     },
     config = function()
       require("hanger").setup({
-        output = "term",      -- options: 'term' / 'zellij'
-        floating_pane = false, -- only valid for 'zellij' 'output'
+        -- options: 'term' / 'zellij'
+        output = "zellij",
+        -- only valid for 'zellij' 'output'
+        floating_pane = true,
       })
 
-      vim.api.nvim_set_keymap('n', '<leader>rt', ':RunSingleTest<CR>',
+      vim.api.nvim_set_keymap('n', '<leader>rt', ':RunTest<CR>',
         { desc = '[R]un [T]est', noremap = true, silent = true })
-      vim.api.nvim_set_keymap('n', '<leader>rrt', ':RerunTest<CR>',
+      vim.api.nvim_set_keymap('n', '<leader>rrt', ':ReRunTest<CR>',
         { desc = '[R]e [R]un [T]est', noremap = true, silent = true })
-      vim.api.nvim_set_keymap('n', '<leader>rft', ':RunFileTests<CR>',
-        { desc = '[R]un [F]ile [T]ests', noremap = true, silent = true })
-      vim.api.nvim_set_keymap('n', '<leader>sr', ':ShowRunnables<CR>',
-        { desc = '[S]how [R]unnables', noremap = true, silent = true })
+      vim.api.nvim_set_keymap('n', '<leader>rat', ':RunAllTests<CR>',
+        { desc = "[R]un [A]ll [T]ests", noremap = true, silent = true })
+      vim.api.nvim_set_keymap('n', '<leader>st', ':ShowTests<CR>',
+        { desc = '[S]how [T]ests', noremap = true, silent = true })
     end,
-}
+  }
 ```
 
 ## Coming Soon
-Support for additional programming languages will be added in future releases. Stay tuned for more!
+Support for additional programming languages will be added in future releases.
 

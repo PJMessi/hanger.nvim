@@ -132,7 +132,7 @@ local function extract_test_type(node, query, root, buf)
     return test_type
 end
 
-function Javascript.show_runnables(config, is_typescript)
+function Javascript.show_tests(config, is_typescript)
     local lang = get_lang(is_typescript)
 
     -- Get buffer and parser

@@ -14,7 +14,7 @@ function M.setup(user_config)
     M.config = vim.tbl_deep_extend("force", M.config, user_config)
 end
 
-function M.run_single_test()
+function M.run_test()
     local lang_name = vim.bo.filetype
     if lang_name == "rust" then
         rust.execute_single(M.config)
@@ -29,7 +29,7 @@ function M.run_single_test()
     end
 end
 
-function M.run_tests_in_file()
+function M.run_all_tests()
     local lang_name = vim.bo.filetype
     if lang_name == "rust" then
         rust.execute_package(M.config)
@@ -48,16 +48,16 @@ function M.rerun_test()
     term.execute_cache(M.config)
 end
 
-function M.show_runnables()
+function M.show_tests()
     local lang_name = vim.bo.filetype
     if lang_name == "rust" then
-        rust.show_runnables(M.config)
+        rust.show_tests(M.config)
     elseif lang_name == "go" then
-        go.show_runnables(M.config)
+        go.show_tests(M.config)
     elseif lang_name == "javascript" then
-        javascript.show_runnables(M.config)
+        javascript.show_tests(M.config)
     elseif lang_name == "typescript" then
-        typescript.show_runnables(M.config)
+        typescript.show_tests(M.config)
     else
         vim.notify("language not supported", vim.log.levels.ERROR)
     end
