@@ -22,15 +22,15 @@ local javascript = require("hanger.test_actions.javascript")
 -- }
 
 function Typescript.execute_single(config)
-    javascript.execute_single(config, true)
+	javascript.execute_single(config, true)
 end
 
 function Typescript.execute_package(config)
-    javascript.execute_package(config)
+	javascript.execute_package(config)
 end
 
 function Typescript.show_tests(config)
-    javascript.show_tests(config, true)
+	javascript.show_tests(config, true)
 end
 
 return Typescript
